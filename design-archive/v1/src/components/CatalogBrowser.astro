@@ -1,0 +1,129 @@
+---
+import ProductCard from './ProductCard.astro';
+import { SEASONS, TYPES, SIZE_BANDS, sizeBand, type Product } from '../lib/catalog';
+
+interface Props { items: Product[]; showSeasons?: boolean; }
+const { items, showSeasons = false } = Astro.props;
+
+const countBy = (fn: (p: Product) => string) =>
+  items.reduce<Record<string, number>>((acc, p) => ((acc[fn(p)] = (acc[fn(p)] ?? 0) + 1), acc), {});
+const seasons = countBy((p) => p.season);
+const types = countBy((p) => p.type);
+const sizes = countBy(sizeBand);
+
+const groups = [
+  ...(showSeasons ? [{ key: 'season', title: 'Collection', opts: SEASONS.map((s) => ({ key: s.key, name: s.name, n: seasons[s.key] })) }] : []),
+  { key: 'type', title: 'Product type', opts: TYPES.filter((t) => types[t.key]).map((t) => ({ key: t.key, name: t.name, n: types[t.key] })) },
+  { key: 'size', title: 'Size', opts: SIZE_BANDS.filter((b) => sizes[b.key]).map((b) => ({ key: b.key, name: b.name, n: sizes[b.key] })) },
+];
+---
+<div class="browser" data-browser>
+  <details class="filters" open data-filters>
+    <summary>Filter <span class="label" data-filter-summary></span></summary>
+    <div class="filter-body">
+      <input class="search" type="search" placeholder="Search model, e.g. H35" aria-label="Search by model number" data-search />
+      {groups.map((g) => (
+        <div class="filter-group" data-group={g.key}>
+          <h2>{g.title}</h2>
+          {g.opts.map((o) => (
+            <button class="filter-opt" type="button" aria-pressed="false" data-value={o.key}>
+              <span>{o.name}</span><i>{o.n}</i>
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  </details>
+
+  <div>
+    <div class="results-bar">
+      <span class="label" data-count aria-live="polite">{items.length} models</span>
+      <button type="button" data-clear hidden>Clear filters</button>
+    </div>
+    <div class="grid" data-grid>
+      {items.map((p) => <ProductCard product={p} filterable />)}
+    </div>
+    <p class="empty" data-empty hidden>No models match these filters. Try removing one, or <a href="/contact/">tell us what you need</a>.</p>
+    <div class="more-row"><button class="btn line" type="button" data-more hidden>Show more</button></div>
+  </div>
+</div>
+
+<script>
+  const PAGE = 48;
+  const root = document.querySelector<HTMLElement>('[data-browser]');
+  if (root) {
+    const cards = [...root.querySelectorAll<HTMLElement>('.card')];
+    const groups = [...root.querySelectorAll<HTMLElement>('[data-group]')];
+    const search = root.querySelector<HTMLInputElement>('[data-search]')!;
+    const countEl = root.querySelector<HTMLElement>('[data-count]')!;
+    const clearBtn = root.querySelector<HTMLElement>('[data-clear]')!;
+    const moreBtn = root.querySelector<HTMLElement>('[data-more]')!;
+    const emptyEl = root.querySelector<HTMLElement>('[data-empty]')!;
+    const details = root.querySelector<HTMLDetailsElement>('[data-filters]')!;
+    const summary = root.querySelector<HTMLElement>('[data-filter-summary]')!;
+    const active: Record<string, string> = {};
+    let limit = PAGE;
+
+    if (window.matchMedia('(max-width: 860px)').matches) details.open = false;
+
+    function apply(keepLimit = false) {
+      if (!keepLimit) limit = PAGE;
+      const q = search.value.trim().toLowerCase().replace(/^cs26-?/, '');
+      const matched = cards.filter(
+        (c) =>
+          Object.entries(active).every(([k, v]) => c.dataset[k] === v) &&
+          (!q || c.dataset.q!.includes(q)),
+      );
+      const show = new Set(matched.slice(0, limit));
+      cards.forEach((c) => (c.hidden = !show.has(c)));
+      countEl.textContent = `${matched.length} model${matched.length === 1 ? '' : 's'}`;
+      const left = matched.length - show.size;
+      moreBtn.hidden = left <= 0;
+      moreBtn.textContent = `Show ${Math.min(left, PAGE)} more of ${left}`;
+      emptyEl.hidden = matched.length > 0;
+      const filterCount = Object.keys(active).length + (q ? 1 : 0);
+      clearBtn.hidden = filterCount === 0;
+      summary.textContent = filterCount ? `${filterCount} active` : '';
+      groups.forEach((g) =>
+        g.querySelectorAll<HTMLElement>('.filter-opt').forEach((o) =>
+          o.setAttribute('aria-pressed', String(active[g.dataset.group!] === o.dataset.value)),
+        ),
+      );
+    }
+
+    function writeUrl() {
+      const params = new URLSearchParams(active);
+      if (search.value.trim()) params.set('q', search.value.trim());
+      const qs = params.toString();
+      history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+    }
+
+    groups.forEach((g) =>
+      g.addEventListener('click', (e) => {
+        const opt = (e.target as HTMLElement).closest<HTMLElement>('.filter-opt');
+        if (!opt) return;
+        const key = g.dataset.group!;
+        if (active[key] === opt.dataset.value) delete active[key];
+        else active[key] = opt.dataset.value!;
+        apply();
+        writeUrl();
+      }),
+    );
+    search.addEventListener('input', () => { apply(); writeUrl(); });
+    moreBtn.addEventListener('click', () => { limit += PAGE; apply(true); });
+    clearBtn.addEventListener('click', () => {
+      Object.keys(active).forEach((k) => delete active[k]);
+      search.value = '';
+      apply();
+      writeUrl();
+    });
+
+    const params = new URLSearchParams(location.search);
+    groups.forEach((g) => {
+      const v = params.get(g.dataset.group!);
+      if (v && g.querySelector(`[data-value="${CSS.escape(v)}"]`)) active[g.dataset.group!] = v;
+    });
+    search.value = params.get('q') ?? '';
+    apply();
+  }
+</script>

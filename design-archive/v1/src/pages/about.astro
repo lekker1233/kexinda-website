@@ -1,0 +1,41 @@
+---
+import Base from '../layouts/Base.astro';
+import { SEASONS } from '../lib/catalog';
+---
+<Base title="About" description="Kexinda is a China-based manufacturer of artificial foliage, supplying wholesalers, importers, distributors and decoration companies in different markets.">
+  <div class="wrap page-intro">
+    <span class="label muted">About Kexinda</span>
+    <h1>Inspired by Nature.<br /><em>Made for Your Market.</em></h1>
+  </div>
+
+  <div class="band" aria-hidden="true">
+    {SEASONS.map((s) => <img src={`/images/seasons/${s.key}.webp`} alt="" loading="lazy" width="900" height="1400" />)}
+  </div>
+
+  <section class="section wrap split">
+    <span class="label muted">Who we are</span>
+    <div class="prose">
+      <p>Kexinda is a China-based manufacturer specializing in artificial foliage products, including artificial leaf branches, greenery garlands, individual artificial leaves and decorative greenery.</p>
+      <p>We focus on providing practical product solutions for wholesalers, importers, distributors, decoration companies and business customers in different markets.</p>
+      <p>Our range is suitable for home decoration, floral arrangements, commercial displays, wedding decorations, seasonal projects and other creative applications.</p>
+    </div>
+  </section>
+
+  <section class="section plate-section">
+    <div class="wrap">
+      <div class="section-head"><h2>What we value</h2></div>
+      <ul class="values">
+        <li><strong>Product quality</strong><span>We make foliage that holds up to a close look, on the shelf and in the display.</span></li>
+        <li><strong>Clear communication</strong><span>Every requirement is different, so we talk through the details before anything moves forward.</span></li>
+        <li><strong>Long-term relationships</strong><span>We would rather grow with a customer season after season than sell one order.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>Every customer has different requirements. Tell us yours.</h2>
+      <a class="btn light" href="/contact/">Send an inquiry</a>
+    </div>
+  </section>
+</Base>

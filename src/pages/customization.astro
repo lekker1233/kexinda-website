@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import { bySlug, img, productUrl } from '../lib/catalog';
+
+const areas = [
+  ['Product styles', 'Choose a catalog model as your starting point, or describe the style your market is asking for.'],
+  ['Leaf shapes', 'Foliage sets the character of a design. Tell us which shapes and textures you want to see.'],
+  ['Colors', 'Bring your color direction or reference samples, and we can talk through what fits your range.'],
+  ['Dimensions', 'If a design works but the size does not, let us know the dimensions you need.'],
+  ['Packaging', 'Share your packaging preferences so we can discuss them alongside the product.'],
+];
+
+const ranges = [
+  { title: 'Same basket, four colors', items: ['spring-c341-13in', 'spring-c342-13in', 'spring-c343-13in', 'spring-c344-13in'] },
+  { title: 'Same wreath, four colors', items: ['spring-c345-20in', 'spring-c346-20in', 'spring-c347-20in', 'spring-c348-20in'] },
+].map((r) => ({ ...r, items: r.items.map(bySlug) }));
+---
+<Base title="Customization" description="Discuss product styles, leaf shapes, colors, dimensions and packaging with Kexinda for your specific sourcing needs.">
+  <div class="wrap page-intro">
+    <span class="label muted">Customization</span>
+    <h1>Start from the catalog.<br /><em>Finish with your brief.</em></h1>
+    <p class="lede">Every customer has different requirements. We welcome discussions about specific sourcing needs and potential customization.</p>
+  </div>
+
+  <section class="wrap" style="padding-bottom:var(--section)">
+    <ul class="index-list">
+      {areas.map(([name, note], i) => (
+        <li class="index-row" style="pointer-events:none">
+          <span class="num">{String(i + 1).padStart(2, '0')}</span>
+          <span class="name">{name}</span>
+          <span></span>
+          <span class="note">{note}</span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="section plate-section">
+    <div class="wrap">
+      <div class="section-head"><h2>Variations already in the catalog</h2></div>
+      {ranges.map((r) => (
+        <div style="margin-bottom:40px">
+          <p class="label muted">{r.title}</p>
+          <div class="ways" style="margin-top:10px;margin-bottom:0">
+            {r.items.map((p) => (
+              <a href={productUrl(p)}>
+                <img src={img(p.images[0].src, 800)} alt={`Model ${p.model}`} loading="lazy" width="800" height="1067" />
+                <span class="label">{p.model}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="section-head"><h2>What helps us help you</h2></div>
+    <ol class="steps">
+      <li><strong>Your market</strong><span>Where you sell, and who you sell to: retail, wholesale, events or projects.</span></li>
+      <li><strong>Your reference</strong><span>Catalog model numbers, photos or samples of what you have in mind.</span></li>
+      <li><strong>Your quantities</strong><span>An estimate per model, with your timing and any packaging requirements.</span></li>
+    </ol>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>Have a brief in mind?</h2>
+      <a class="btn light" href="/contact/">Start the conversation</a>
+    </div>
+  </section>
+</Base>

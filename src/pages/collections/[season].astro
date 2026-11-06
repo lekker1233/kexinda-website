@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import CatalogBrowser from '../../components/CatalogBrowser.astro';
+import { SEASONS, inSeason } from '../../lib/catalog';
+
+export function getStaticPaths() {
+  return SEASONS.map((s) => ({ params: { season: s.key }, props: { s } }));
+}
+
+const { s } = Astro.props;
+const items = inSeason(s.key);
+const path = Astro.url.pathname;
+---
+<Base title={`${s.name} Collection`} description={`${s.blurb} ${items.length} wholesale models from Kexinda.`} image={`/images/seasons/${s.key}.webp`}>
+  <header class="season-head" style={`--accent:${s.color}`}>
+    <div>
+      <span class="label"><a href="/products/">Catalog</a> / Collection</span>
+      <h1>{s.name}</h1>
+      <p>{s.blurb}</p>
+    </div>
+    <figure><img src={`/images/seasons/${s.key}.webp`} alt={`Close-up of a ${s.name.toLowerCase()} wreath from the Kexinda catalog`} width="900" height="1400" /></figure>
+  </header>
+  <div class="wrap" style={`--accent:${s.color}`}>
+    <nav class="season-nav" aria-label="Collections">
+      {SEASONS.map((o) => (
+        <a href={`/collections/${o.key}/`} aria-current={path.includes(`/collections/${o.key}`) ? 'page' : undefined}>{o.name}</a>
+      ))}
+    </nav>
+    <CatalogBrowser items={items} />
+  </div>
+</Base>

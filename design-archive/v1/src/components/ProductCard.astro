@@ -1,0 +1,45 @@
+---
+import { oneOf, titleOf, img, srcset, altOf, fitOf, productUrl, sizeBand, type Product } from '../lib/catalog';
+
+interface Props { product: Product; filterable?: boolean; }
+const { product: p, filterable = false } = Astro.props;
+const first = p.images[0];
+const data = filterable
+  ? { 'data-season': p.season, 'data-type': p.type, 'data-size': sizeBand(p), 'data-q': `${p.model} ${p.code}`.toLowerCase() }
+  : {};
+---
+<article class="card" {...data}>
+  <a class="card-link" href={productUrl(p)}>
+    <span class="card-frame" style={`background:${first.bg}`}>
+      <img
+        src={img(first.src, 400)}
+        srcset={srcset(first)}
+        sizes="(max-width: 600px) 46vw, (max-width: 1100px) 30vw, 280px"
+        alt={altOf(p)}
+        width={first.w}
+        height={first.h}
+        loading="lazy"
+        decoding="async"
+        style={`object-fit:${fitOf(first)}`}
+      />
+      {p.lit && <span class="tag-lit">PRE-LIT</span>}
+    </span>
+    <span class="card-meta">
+      <span class="card-model">{p.model}</span>
+      {p.size && <span class="card-size">{p.size.label}</span>}
+    </span>
+    <span class="card-type">{oneOf(p)}</span>
+  </a>
+  <button
+    class="add"
+    type="button"
+    aria-pressed="false"
+    aria-label={`Add ${p.model} to inquiry list`}
+    data-inquiry-toggle
+    data-style="icon"
+    data-slug={p.slug}
+    data-model={p.model}
+    data-title={`${titleOf(p)}${p.size ? `, ${p.size.label}` : ''}`}
+    data-img={img(first.src, 400)}
+  >+</button>
+</article>

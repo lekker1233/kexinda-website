@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import CatalogBrowser from '../../components/CatalogBrowser.astro';
+import { products } from '../../lib/catalog';
+---
+<Base title="Catalog" description={`Browse ${products.length} artificial foliage models: wreaths, garlands, leaf stems, arrangements and seasonal decor from Kexinda. Filter by collection, type and size.`}>
+  <div class="wrap page-intro">
+    <h1>Catalog</h1>
+    <p class="lede">Every model, with its number and size. Filter by collection, type or size, and press + to add a model to your inquiry list.</p>
+  </div>
+  <div class="wrap">
+    <CatalogBrowser items={products} showSeasons />
+  </div>
+</Base>

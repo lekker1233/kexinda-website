@@ -1,0 +1,127 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { products, season, type, titleOf, img, srcset, altOf, fitOf, type Product } from '../../lib/catalog';
+
+export function getStaticPaths() {
+  return products.map((product) => ({ params: { slug: product.slug }, props: { product } }));
+}
+
+interface Props { product: Product; }
+const { product: p } = Astro.props;
+const s = season(p.season);
+const t = type(p.type);
+const title = titleOf(p);
+const first = p.images[0];
+const fullTitle = `${title}${p.size ? `, ${p.size.label}` : ''}`;
+
+// Same type in the same collection, closest model numbers first.
+const peers = products.filter((o) => o.season === p.season && o.type === p.type && o.slug !== p.slug);
+const at = products.indexOf(p);
+const related = peers.sort((a, b) => Math.abs(products.indexOf(a) - at) - Math.abs(products.indexOf(b) - at)).slice(0, 6);
+
+const thumbLabel = (i: number) => {
+  const image = p.images[i];
+  if (image.lit) return 'Lights on';
+  return p.colorOptions ? `Option ${i + 1}` : `View ${i + 1}`;
+};
+---
+<Base
+  title={`${fullTitle} (${p.model})`}
+  description={`${p.model}: artificial ${title.toLowerCase()}${p.size ? `, ${p.size.label} (${p.size.metric})` : ''}. Available wholesale from Kexinda, with options to discuss colors, dimensions and packaging.`}
+  image={img(first.src, 800)}
+>
+  <div class="wrap">
+    <nav class="crumbs label" aria-label="Breadcrumb">
+      <a href="/products/">Catalog</a><span>/</span>
+      <a href={`/collections/${s.key}/`}>{s.name}</a><span>/</span>
+      <span>{p.model}</span>
+    </nav>
+    <div class="pdp" style={`--accent:${s.color}`}>
+      <div>
+        <div class="pdp-main" style={`background:${first.bg}`} data-main-frame>
+          <img
+            data-main
+            src={img(first.src, 800)}
+            srcset={srcset(first)}
+            sizes="(max-width: 860px) 100vw, 56vw"
+            alt={altOf(p)}
+            width={first.w}
+            height={first.h}
+            fetchpriority="high"
+            style={`object-fit:${fitOf(first)}`}
+          />
+        </div>
+        {p.images.length > 1 && (
+          <div class="pdp-thumbs">
+            {p.images.map((image, i) => (
+              <button
+                type="button"
+                aria-pressed={i === 0 ? 'true' : 'false'}
+                aria-label={`Show ${thumbLabel(i).toLowerCase()}`}
+                data-thumb
+                data-src={img(image.src, 800)}
+                data-srcset={srcset(image)}
+                data-bg={image.bg}
+                data-fit={fitOf(image)}
+              >
+                <img src={img(image.src, 400)} alt="" width="74" height="99" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div class="pdp-info">
+        <h1>{title}</h1>
+        <dl class="spec">
+          <div><dt>Model</dt><dd>{p.model}</dd></div>
+          {p.size && <div><dt>Size</dt><dd>Approx. {p.size.label} ({p.size.metric})</dd></div>}
+          <div><dt>Collection</dt><dd><a href={`/collections/${s.key}/`}>{s.name}</a></dd></div>
+          <div><dt>Type</dt><dd><a href={`/products/?type=${t.key}`}>{t.name}</a></dd></div>
+          {p.lit && <div><dt>Lighting</dt><dd>Lit version available</dd></div>}
+          {p.colorOptions && <div><dt>Options</dt><dd>Shown in {p.images.length} color options</dd></div>}
+        </dl>
+        <div class="pdp-actions">
+          <button
+            class="btn"
+            type="button"
+            aria-pressed="false"
+            data-inquiry-toggle
+            data-slug={p.slug}
+            data-model={p.model}
+            data-title={fullTitle}
+            data-img={img(first.src, 400)}
+          >Add to inquiry list</button>
+          <a class="btn line" href={`/contact/?model=${p.slug}`}>Inquire now</a>
+        </div>
+        <p class="pdp-note">Pricing and order terms are quoted on inquiry. Tell us if you would like to discuss colors, dimensions or packaging for this model.</p>
+      </div>
+    </div>
+  </div>
+
+  {related.length > 0 && (
+    <section class="related">
+      <div class="wrap">
+        <h2>More {t.name.toLowerCase()} from {s.name}</h2>
+        <div class="grid">{related.map((o) => <ProductCard product={o} />)}</div>
+      </div>
+    </section>
+  )}
+</Base>
+
+<script>
+  const main = document.querySelector<HTMLImageElement>('[data-main]');
+  const frame = document.querySelector<HTMLElement>('[data-main-frame]');
+  const thumbs = document.querySelectorAll<HTMLElement>('[data-thumb]');
+  thumbs.forEach((t) =>
+    t.addEventListener('click', () => {
+      if (!main || !frame) return;
+      main.srcset = t.dataset.srcset!;
+      main.src = t.dataset.src!;
+      main.style.objectFit = t.dataset.fit!;
+      frame.style.background = t.dataset.bg!;
+      thumbs.forEach((o) => o.setAttribute('aria-pressed', String(o === t)));
+    }),
+  );
+</script>

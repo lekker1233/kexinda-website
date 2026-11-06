@@ -1,0 +1,173 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../../site.config.mjs';
+import { products, SEASONS, TYPES, inSeason, ofType, bySlug, img, productUrl } from '../lib/catalog';
+
+const longest = Math.max(...products.map((p) => p.size?.inches ?? 0));
+const smallest = Math.min(...products.map((p) => p.size?.inches ?? Infinity));
+
+const typeRows = TYPES.map((t) => ({ ...t, count: ofType(t.key).length, preview: bySlug(t.image) }));
+
+const specimens = [
+  ['christmas-s12-22in', 'Long-needle pine pick'],
+  ['harvest-h05-35in', 'Dusky leaf branch'],
+  ['harvest-h28-12in', 'Autumn leaf spray'],
+  ['christmas-s141-19in', 'Cedar pick'],
+  ['spring-c334-40in', 'Blossom branch'],
+  ['harvest-h36-22in', 'Maple branch'],
+].map(([slug, name]) => ({ p: bySlug(slug), name }));
+
+const ways = ['spring-c345-20in', 'spring-c346-20in', 'spring-c347-20in', 'spring-c348-20in'].map(bySlug);
+const waysLabel = ['Pink', 'Blue', 'White', 'Yellow'];
+
+const org = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Kexinda',
+  slogan: SITE.tagline,
+  description: 'China-based manufacturer of artificial foliage for wholesalers, importers and distributors.',
+  ...(SITE.url ? { url: SITE.url } : {}),
+  ...(SITE.contact.email ? { email: SITE.contact.email } : {}),
+};
+---
+<Base description="Kexinda is a China-based manufacturer of artificial leaf branches, greenery garlands, wreaths and seasonal decorative greenery for wholesalers, importers and distributors.">
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(org)} />
+
+  <section class="wrap hero-top">
+    <div>
+      <span class="label">Artificial foliage manufacturer &amp; wholesale supplier, China</span>
+      <h1 class="display"><em>Inspired by Nature.</em><br />Made for Your Market.</h1>
+    </div>
+    <div class="hero-side">
+      <p>Leaf branches, greenery garlands, wreaths and decorative greenery for wholesalers, importers and distributors, organized by the seasons your customers buy for.</p>
+      <a class="btn" href="/products/">Browse the catalog</a>
+    </div>
+  </section>
+
+  <nav class="strip" aria-label="Seasonal collections">
+    {SEASONS.map((s) => (
+      <a href={`/collections/${s.key}/`} style={`--c:${s.color}`}>
+        <img src={`/images/seasons/${s.key}.webp`} alt="" loading="eager" width="900" height="1400" />
+        <span class="strip-label">
+          <strong>{s.name}</strong>
+          <span class="label">{inSeason(s.key).length} models</span>
+        </span>
+      </a>
+    ))}
+  </nav>
+
+  <div class="wrap">
+    <dl class="facts">
+      <div><dt>{products.length}</dt><dd>models in the catalog</dd></div>
+      <div><dt>{SEASONS.length}</dt><dd>seasonal collections</dd></div>
+      <div><dt>{smallest} in – {longest / 12} ft</dt><dd>size range</dd></div>
+      <div><dt>On request</dt><dd>custom styles, colors, sizes and packaging</dd></div>
+    </dl>
+  </div>
+
+  <section class="section wrap">
+    <div class="section-head">
+      <h2>What we make</h2>
+      <a class="arrow" href="/products/">View all {products.length} models</a>
+    </div>
+    <div class="index-grid">
+      <div class="index-preview" aria-hidden="true">
+        <img data-preview-img src={img(typeRows[0].preview.images[0].src, 800)} alt="" width="800" height="1067" />
+      </div>
+      <div class="index-list">
+        {typeRows.map((t, i) => (
+          <a class="index-row" href={`/products/?type=${t.key}`} data-preview={img(t.preview.images[0].src, 800)}>
+            <span class="num">{String(i + 1).padStart(2, '0')}</span>
+            <span class="name">{t.name}</span>
+            <span class="count">{t.count}</span>
+            <span class="note">{t.note}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section plate-section">
+    <div class="wrap">
+      <div class="plate-intro">
+        <h2>It starts with <em>the leaf.</em></h2>
+        <p class="lede">Foliage is our specialty: individual leaves, leaf branches, greenery garlands and decorative greenery, supplied on their own or built into finished designs.</p>
+      </div>
+      <div class="plate">
+        {specimens.map(({ p, name }) => (
+          <figure>
+            <a href={productUrl(p)}>
+              <img src={img(p.images[0].src, 800)} alt={`${name}, model ${p.model}`} loading="lazy" width="800" height="1067" />
+              <figcaption>
+                <strong>{name}</strong>
+                <span class="label muted">{p.model} · {p.size?.label}</span>
+              </figcaption>
+            </a>
+          </figure>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <h2>One design, <em>your colors.</em></h2>
+    <div class="ways">
+      {ways.map((p, i) => (
+        <a href={productUrl(p)}>
+          <img src={img(p.images[0].src, 800)} alt={`${waysLabel[i]} leaf and rose wreath, model ${p.model}`} loading="lazy" width="800" height="1067" />
+          <span class="label">{p.model} · {waysLabel[i]}</span>
+        </a>
+      ))}
+    </div>
+    <ul class="spec-list">
+      <li><strong>Product styles</strong><span>Start from a catalog model or describe your own</span></li>
+      <li><strong>Leaf shapes</strong><span>Choose the foliage your market prefers</span></li>
+      <li><strong>Colors</strong><span>Match your range and season</span></li>
+      <li><strong>Dimensions</strong><span>Size up or down for your channel</span></li>
+      <li><strong>Packaging</strong><span>Tell us your preferences</span></li>
+    </ul>
+    <p style="margin-top:28px"><a class="arrow" href="/customization/">How customization works</a></p>
+  </section>
+
+  <section class="section plate-section">
+    <div class="wrap two-lists">
+      <div>
+        <h2>Who we supply</h2>
+        <ul class="ruled">
+          <li>Wholesalers</li><li>Importers</li><li>Distributors</li><li>Decoration companies</li><li>Business customers</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Where it goes</h2>
+        <ul class="ruled">
+          <li>Home decoration</li><li>Floral arrangements</li><li>Commercial displays</li><li>Wedding decorations</li><li>Seasonal &amp; creative projects</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section wrap">
+    <div class="section-head"><h2>How to inquire</h2></div>
+    <ol class="steps">
+      <li><strong>Shortlist models</strong><span>Press + on any product to add it to your inquiry list as you browse.</span></li>
+      <li><strong>Send your list</strong><span>Add your market, quantities and any changes to color, size or packaging.</span></li>
+      <li><strong>Talk it through</strong><span>We come back to you to discuss your requirements and a quotation.</span></li>
+    </ol>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <h2>Tell us what your market is looking for.</h2>
+      <a class="btn light" href="/contact/">Send an inquiry</a>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const preview = document.querySelector<HTMLImageElement>('[data-preview-img]');
+  document.querySelectorAll<HTMLElement>('[data-preview]').forEach((row) => {
+    const show = () => { if (preview) preview.src = row.dataset.preview!; };
+    row.addEventListener('mouseenter', show);
+    row.addEventListener('focus', show);
+  });
+</script>

@@ -1,0 +1,4 @@
+const sharp=require('sharp'),path=require('path');
+const [,,dir,out]=process.argv;
+const keep=['spring-C295','spring-C273','spring-C276','spring-C309','spring-C399','spring-C334','spring-C345','spring-C346','spring-C347','spring-C348','easter-F69','easter-F19','easter-F58','patriotic-G17','patriotic-G05','patriotic-G23','harvest-H35','harvest-H37','harvest-H82','harvest-H88','harvest-H36','harvest-H05','harvest-H42','halloween-G35','halloween-G23','halloween-G09','halloween-G38','halloween-G142','christmas-S142','christmas-S141','christmas-S12','christmas-S70','christmas-S135'];
+(async()=>{for(const k of keep){const tr=await sharp(path.join(dir,k+'.png')).trim({threshold:10}).toBuffer();await sharp(tr).resize({width:1000,height:1000,fit:'inside',withoutEnlargement:true}).webp({quality:82,alphaQuality:90}).toFile(path.join(out,k+'.webp'));}console.log(keep.length)})();

@@ -1,0 +1,110 @@
+---
+import '../styles/global.css';
+import { SITE } from '../../site.config.mjs';
+import { SEASONS } from '../lib/catalog';
+
+interface Props { title?: string; description: string; image?: string; }
+const { title, description, image } = Astro.props;
+const path = Astro.url.pathname;
+const fullTitle = title ? `${title} | Kexinda` : 'Kexinda | Artificial Foliage Manufacturer & Wholesale Supplier';
+const nav = [
+  ['Catalog', '/products/'],
+  ['Customization', '/customization/'],
+  ['About', '/about/'],
+  ['Contact', '/contact/'],
+];
+const canonical = SITE.url ? new URL(path, SITE.url).href : null;
+const { email, whatsapp, phone, address } = SITE.contact;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#eff1eb" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    {canonical && <link rel="canonical" href={canonical} />}
+    {canonical && <meta property="og:url" content={canonical} />}
+    {canonical && image && <meta property="og:image" content={new URL(image, SITE.url).href} />}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-head">
+      <div class="wrap">
+        <a class="brand" href="/" aria-label="Kexinda home">KEXINDA</a>
+        <nav class="nav" id="site-nav" aria-label="Main">
+          {nav.map(([label, href]) => (
+            <a href={href} aria-current={path.startsWith(href) ? 'page' : undefined}>{label}</a>
+          ))}
+        </nav>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" data-menu>Menu</button>
+        <button class="basket-btn" type="button" data-open-drawer>
+          <span>Inquiry list</span>
+          <span class="basket-count" data-inquiry-count>0</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main"><slot /></main>
+
+    <footer class="site-foot">
+      <div class="wrap">
+        <div class="foot-grid">
+          <div>
+            <div class="foot-brand">KEXINDA</div>
+            <p class="foot-tag">{SITE.tagline}</p>
+          </div>
+          <div>
+            <h3>Collections</h3>
+            <ul>{SEASONS.map((s) => <li><a href={`/collections/${s.key}/`}>{s.name}</a></li>)}</ul>
+          </div>
+          <div>
+            <h3>Company</h3>
+            <ul>{nav.map(([label, href]) => <li><a href={href}>{label}</a></li>)}</ul>
+          </div>
+          <div>
+            <h3>Get in touch</h3>
+            <ul>
+              {email && <li><a href={`mailto:${email}`}>{email}</a></li>}
+              {whatsapp && <li><a href={`https://wa.me/${whatsapp}`}>WhatsApp</a></li>}
+              {phone && <li><a href={`tel:${phone.replace(/\s/g, '')}`}>{phone}</a></li>}
+              {address && <li>{address}</li>}
+              <li><a href="/contact/">Send an inquiry</a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="foot-note">© {new Date().getFullYear()} Kexinda. Artificial foliage manufacturer and wholesale supplier, China.</p>
+      </div>
+    </footer>
+
+    <dialog class="drawer" data-drawer aria-labelledby="drawer-title">
+      <div class="drawer-inner">
+        <div class="drawer-head">
+          <h2 id="drawer-title">Inquiry list</h2>
+          <button type="button" data-close-drawer>Close</button>
+        </div>
+        <div class="drawer-body" data-inquiry-list></div>
+        <div class="drawer-foot">
+          <a class="btn" href="/contact/">Continue to inquiry</a>
+          <a class="btn line" href="/products/">Keep browsing</a>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      import '../scripts/inquiry';
+      const btn = document.querySelector<HTMLButtonElement>('[data-menu]');
+      const nav = document.getElementById('site-nav');
+      btn?.addEventListener('click', () => {
+        const open = nav?.classList.toggle('open') ?? false;
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    </script>
+  </body>
+</html>

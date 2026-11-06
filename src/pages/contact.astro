@@ -1,0 +1,128 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../../site.config.mjs';
+import { products, titleOf, img } from '../lib/catalog';
+
+const { email, whatsapp, phone, address } = SITE.contact;
+const hasDirect = email || whatsapp || phone || address;
+// Lets a "Inquire now" link add its model without shipping the whole catalog to this page.
+const lookup = Object.fromEntries(
+  products.map((p) => [p.slug, [p.model, `${titleOf(p)}${p.size ? `, ${p.size.label}` : ''}`, img(p.images[0].src, 400)]]),
+);
+---
+<Base title="Contact" description="Send Kexinda your inquiry: model numbers, quantities, target market and any requirements for colors, dimensions or packaging.">
+  <div class="wrap page-intro">
+    <h1>Send an inquiry</h1>
+    <p class="lede">Tell us about your market and what you need. Your inquiry list is included automatically.</p>
+  </div>
+
+  <div class="wrap contact-grid">
+    <form class="form" data-form data-email={email} data-endpoint={SITE.inquiryEndpoint} novalidate={false}>
+      <div class="field"><label for="f-name">Name</label><input id="f-name" name="name" required autocomplete="name" /></div>
+      <div class="field"><label for="f-company">Company <span>(optional)</span></label><input id="f-company" name="company" autocomplete="organization" /></div>
+      <div class="field"><label for="f-email">Email</label><input id="f-email" name="email" type="email" required autocomplete="email" /></div>
+      <div class="field"><label for="f-country">Country or market</label><input id="f-country" name="market" autocomplete="country-name" /></div>
+      <div class="field full">
+        <label for="f-role">Your business</label>
+        <select id="f-role" name="business">
+          <option value="">Select one</option>
+          <option>Wholesaler</option><option>Importer</option><option>Distributor</option><option>Decoration company</option><option>Retailer</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label for="f-msg">Your requirements</label>
+        <textarea id="f-msg" name="message" required placeholder="Quantities, colors, dimensions, packaging, timing..."></textarea>
+      </div>
+      <div class="full" style="grid-column:1/-1"><button class="btn" type="submit">Send inquiry</button></div>
+      <div class="form-status" data-status role="status" hidden></div>
+    </form>
+
+    <aside class="list-panel">
+      <h2>Your inquiry list</h2>
+      <div data-inquiry-list></div>
+      <p style="margin-top:14px"><a class="arrow" href="/products/">Add more models</a></p>
+      {hasDirect && (
+        <ul class="direct">
+          {email && <li><b>Email</b><a href={`mailto:${email}`}>{email}</a></li>}
+          {whatsapp && <li><b>WhatsApp</b><a href={`https://wa.me/${whatsapp}`}>+{whatsapp}</a></li>}
+          {phone && <li><b>Phone</b><a href={`tel:${phone.replace(/\s/g, '')}`}>{phone}</a></li>}
+          {address && <li><b>Address</b>{address}</li>}
+        </ul>
+      )}
+    </aside>
+  </div>
+  <script type="application/json" id="model-lookup" set:html={JSON.stringify(lookup)} />
+</Base>
+
+<script>
+  import { add, read } from '../scripts/inquiry';
+
+  const param = new URLSearchParams(location.search).get('model');
+  if (param) {
+    const lookup = JSON.parse(document.getElementById('model-lookup')!.textContent!);
+    if (lookup[param]) {
+      const [model, title, image] = lookup[param];
+      add({ slug: param, model, title, img: image });
+    }
+  }
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]')!;
+  const status = form.querySelector<HTMLElement>('[data-status]')!;
+
+  function compose(data: FormData) {
+    const items = read();
+    return [
+      `Name: ${data.get('name')}`,
+      `Company: ${data.get('company') || '-'}`,
+      `Email: ${data.get('email')}`,
+      `Market: ${data.get('market') || '-'}`,
+      `Business: ${data.get('business') || '-'}`,
+      '',
+      'Requirements:',
+      String(data.get('message')),
+      '',
+      `Models (${items.length}):`,
+      ...items.map((i) => `- ${i.model}: ${i.title}`),
+    ].join('\n');
+  }
+
+  function show(message: string, body?: string) {
+    status.hidden = false;
+    status.textContent = message;
+    if (body) {
+      const box = document.createElement('textarea');
+      box.readOnly = true;
+      box.value = body;
+      box.setAttribute('aria-label', 'Inquiry text');
+      status.append(box);
+    }
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const data = new FormData(form);
+    const body = compose(data);
+    const subject = `Inquiry from ${data.get('company') || data.get('name')}: ${read().length} models`;
+    const { endpoint, email } = form.dataset;
+
+    if (endpoint) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ subject, email: data.get('email'), name: data.get('name'), message: body }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        show('Thank you. Your inquiry has been sent.');
+        form.reset();
+      } catch {
+        show('Sorry, your inquiry could not be sent. Please copy the text below and email it to us.', body);
+      }
+    } else if (email) {
+      show('Your email app should now open with this inquiry filled in. If it does not, copy the text below and email it to us.', body);
+      location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    } else {
+      show('This form is not connected yet: no email address has been set for the site. Your inquiry was not sent. Here is the text it would send.', body);
+    }
+  });
+</script>
